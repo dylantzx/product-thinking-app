@@ -1,0 +1,21 @@
+:root{--bg:#fffff8;--fg:#1d1d1b;--muted:#6b6a63;--accent:#a00000;--ok:#1a6b3a;--bad:#a00000;--rule:#d9d6c8;--card:#f6f4e8}
+@media (prefers-color-scheme:dark){:root{--bg:#161612;--fg:#ecebe2;--muted:#9c9a8e;--accent:#ff8a7a;--ok:#6fcf97;--bad:#ff8a7a;--rule:#3a392f;--card:#1f1f19}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:18px/1.6 Georgia,"Iowan Old Style",serif}
+main{max-width:40rem;margin:0 auto;padding:2.5rem 16px 5rem}
+h1{font-size:2rem;line-height:1.2;margin:.2em 0}h2{font-size:1.3rem;margin-top:2.2em;border-bottom:1px solid var(--rule);padding-bottom:.2em}
+.kicker{color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font:600 .75rem system-ui}
+.lede{color:var(--muted);font-style:italic}
+a{color:var(--accent)}
+.card{background:var(--card);border-left:3px solid var(--accent);padding:.8rem 1rem;margin:1.2rem 0}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem}@media(max-width:560px){.compare{grid-template-columns:1fr}}
+.compare div{background:var(--card);padding:.8rem 1rem}.compare h3{margin:0 0 .3rem;font:600 .8rem system-ui;text-transform:uppercase;letter-spacing:.06em}
+.quiz{margin:1.2rem 0}.quiz p.q{font-weight:bold;margin-bottom:.4rem}
+.quiz button.opt{display:block;width:100%;text-align:left;margin:.3rem 0;padding:.55rem .8rem;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--rule);cursor:pointer}
+.quiz button.opt:hover:not(:disabled){border-color:var(--accent)}
+.quiz .opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--card))}
+.quiz .opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--card))}
+.quiz .fb{font-size:.9rem;color:var(--muted);min-height:1.4em}
+textarea{width:100%;min-height:5rem;font:inherit;padding:.6rem;background:var(--card);color:var(--fg);border:1px solid var(--rule)}
+.small{font-size:.85rem;color:var(--muted)}
+nav.crumbs{font:.85rem system-ui;margin-bottom:1rem}
