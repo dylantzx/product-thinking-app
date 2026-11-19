@@ -135,6 +135,32 @@ p{margin:0}
 .stats dt{font-family:var(--display);font-size:8px;color:var(--dim);letter-spacing:.06em;margin-bottom:8px}
 .stats dd{margin:0;font-family:var(--display);font-size:clamp(11px,1.9vw,15px);font-variant-numeric:tabular-nums}
 
+[hidden]{display:none!important}
+.tab{font-family:var(--display);font-size:10px;color:var(--ink);background:var(--raise);border:2px solid var(--line);padding:10px 12px;cursor:pointer}
+.tab[aria-pressed=true]{color:#14122b;background:var(--gold);border-color:var(--gold)}
+.tab:focus-visible,.sw:focus-visible,.name:focus-visible{outline:3px solid var(--p1);outline-offset:3px}
+.btn.danger{color:#fff;background:#c2332a;box-shadow:inset -4px -4px 0 0 #7d1c16,inset 4px 4px 0 0 #ff8f86}
+.ptag{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,10,26,.76);font-family:var(--display);font-size:40px;font-size:clamp(16px,7cqw,56px);color:var(--gold);text-shadow:.08em .08em 0 var(--p2),.16em .16em 0 #14122b}
+.foe{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.foe b{font-family:var(--display);font-size:11px;font-weight:400;color:var(--p2)}
+.study{display:flex;flex-direction:column;gap:8px}
+.study h3{margin:0;color:var(--p1);line-height:1.5}
+.notes{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;counter-reset:n}
+.notes li{counter-increment:n;position:relative;background:var(--raise);border-left:4px solid var(--p1);padding:8px 10px 8px 40px;min-width:0}
+.notes li::before{content:counter(n);position:absolute;left:11px;top:11px;font-family:var(--display);font-size:12px;color:var(--gold)}
+.notes li b{color:var(--ok);font-weight:400}
+.atk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:0;list-style:none}
+.atk li{background:var(--raise);padding:8px 10px;min-width:0}
+.atk b{display:block;font-family:var(--display);font-size:9px;font-weight:400;line-height:1.5;margin-bottom:4px}
+.pv{display:flex;flex-direction:column;gap:12px}
+.make{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px}
+.opt{display:flex;flex-direction:column;gap:7px;min-width:0}
+.opt .row{gap:8px}
+.sw{width:34px;height:34px;padding:0;border:3px solid var(--line);cursor:pointer}
+.sw[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px var(--gold)}
+.name{font-family:var(--display);font-size:16px;color:var(--ink);background:var(--cab);border:3px solid var(--line);padding:10px;width:100%;min-width:0;text-transform:uppercase}
+.name::placeholder{color:var(--dim);opacity:.7}
+
 @keyframes blink{50%{opacity:.25}}
 @keyframes cur{50%{background:transparent;color:inherit}}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
@@ -145,7 +171,8 @@ p{margin:0}
 @media(max-width:640px){
   body{font-size:20px}
   .panel{padding:12px;min-height:0}
-  .how,.vs{grid-template-columns:minmax(0,1fr)}
+  .how,.vs,.notes,.make{grid-template-columns:minmax(0,1fr)}
+  .atk{grid-template-columns:repeat(2,minmax(0,1fr))}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   #m-move{min-width:0;text-align:left}
 }
@@ -160,13 +187,14 @@ p{margin:0}
     <span>STAGE <b id="stg">1/6</b></span>
     <span>SCORE <b id="score">000000</b></span>
     <span>HI <b id="hi">000000</b></span>
+    <button class="chip" id="menu" type="button" hidden>MENU</button>
     <button class="chip" id="snd" type="button" aria-pressed="true">SOUND ON</button>
   </header>
 
   <div class="stage" id="stage">
     <canvas id="cv" width="256" height="112" role="img" aria-label="Pixel fighting stage: your fighter on the left, the opponent on the right"></canvas>
     <div class="hud" id="hud" hidden>
-      <div class="side l"><div class="bar"><i class="ghost" id="g-l"></i><i class="fill" id="f-l"></i></div><div class="nm">WHY KID</div></div>
+      <div class="side l"><div class="bar"><i class="ghost" id="g-l"></i><i class="fill" id="f-l"></i></div><div class="nm" id="nm-l">WHY KID</div></div>
       <div class="clock" id="clock">20</div>
       <div class="side r"><div class="bar"><i class="ghost" id="g-r"></i><i class="fill" id="f-r"></i></div><div class="nm" id="nm-r"></div></div>
     </div>
@@ -174,30 +202,57 @@ p{margin:0}
     <div class="call" id="call"></div>
     <div class="banner" id="banner"></div>
     <div id="pops"></div>
+    <div class="ptag" id="ptag" hidden>PAUSED</div>
     <div class="scan"></div>
   </div>
 
   <section class="panel">
     <div class="scr" id="s-title">
-      <ol class="how">
-        <li><b>READ</b><br>Each round shows one question and two possible answers.</li>
-        <li><b>TYPE</b><br>Type the answer you believe, exactly as shown. Capitals and punctuation count.</li>
-        <li><b>STRIKE</b><br>Faster, cleaner typing lands a bigger hit. Type the wrong answer and you take the hit.</li>
-      </ol>
-      <div class="row"><button class="btn primary" id="b-start" type="button">PRESS START</button><span class="hint">6 opponents, one per lesson. About 15 minutes. Best with a keyboard.</span></div>
+      <ol class="how" id="how-t"></ol>
+      <div class="row"><button class="btn primary" id="b-start" type="button">PRESS START</button><span class="hint">6 opponents, one per lesson. About 15 minutes. Best with a keyboard. Esc or MENU pauses at any time.</span></div>
+    </div>
+
+    <div class="scr" id="s-make" hidden>
+      <div class="row"><h2>CREATE YOUR FIGHTER</h2><span class="hint">Your changes show on the stage as you make them.</span></div>
+      <div class="make" id="opts">
+        <label class="opt"><span class="kick">NAME</span><input class="name" id="hname" type="text" maxlength="12" placeholder="WHY KID" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      </div>
+      <div class="row"><button class="btn primary" id="b-ready" type="button">ENTER THE LADDER</button><button class="tab" id="b-rand" type="button">RANDOMISE</button><button class="tab" id="b-back" type="button">BACK</button></div>
+    </div>
+
+    <div class="scr" id="s-pause" hidden>
+      <div class="row"><h2>PAUSED</h2><span class="hint">The clock is stopped. Press Esc to jump back in.</span></div>
+      <div class="row">
+        <button class="tab" id="t-how" type="button" aria-pressed="true">HOW TO PLAY</button>
+        <button class="tab" id="t-notes" type="button" aria-pressed="false">LESSON NOTES</button>
+        <button class="tab" id="t-quit" type="button" aria-pressed="false">QUIT TO HOME</button>
+      </div>
+      <div class="pv" id="p-how">
+        <ol class="how" id="how-p"></ol>
+        <div><h3>YOUR ATTACKS: POWER = TYPING SPEED (WPM) x ACCURACY</h3><ul class="atk" id="atk"></ul></div>
+        <p class="hint">Backspace fixes a typo. A wrong key costs accuracy. Answer streaks and typo-free answers add bonus damage. A question you miss comes back later in the same fight.</p>
+      </div>
+      <div class="pv study" id="p-notes" hidden><h3 id="p-nh"></h3><ol class="notes" id="p-moves"></ol></div>
+      <div class="pv" id="p-quit" hidden>
+        <p>Quit to the home screen? The score and progress of this run will be lost. Your fighter and your high score are kept.</p>
+        <div class="row"><button class="btn danger" id="b-quit" type="button">YES, QUIT</button></div>
+      </div>
+      <div class="row"><button class="btn primary" id="b-resume" type="button">RESUME</button></div>
     </div>
 
     <div class="scr" id="s-vs" hidden>
       <ol class="ladder" id="ladder"></ol>
-      <div class="vs">
-        <div class="who">
-          <div class="kick" id="vs-kick"></div>
-          <h2 id="vs-title"></h2>
-          <p class="tag"><b id="vs-name"></b><span id="vs-tag"></span></p>
-        </div>
-        <div class="moves"><h3>MOVE LIST: WHAT TO REMEMBER</h3><ul id="vs-moves"></ul></div>
+      <div class="who">
+        <div class="kick" id="vs-kick"></div>
+        <h2 id="vs-title"></h2>
+        <p class="foe"><b id="vs-name"></b><span class="hint" id="vs-tag"></span></p>
       </div>
-      <div class="row"><button class="btn primary" id="b-fight" type="button">FIGHT</button><span class="hint">Read the move list first. The answers come from it.</span></div>
+      <div class="study">
+        <h3 id="vs-nh"></h3>
+        <p class="hint">Every question in this fight comes from these notes. The <b style="color:var(--ok);font-weight:400">green words</b> are the answers you will type.</p>
+        <ol class="notes" id="vs-moves"></ol>
+      </div>
+      <div class="row"><button class="btn primary" id="b-fight" type="button">I'M READY: FIGHT</button><span class="hint">Forgot something mid-fight? MENU or Esc pauses and shows these notes again.</span></div>
     </div>
 
     <div class="scr" id="s-fight" hidden>
@@ -250,8 +305,11 @@ p{margin:0}
 (() => {
 'use strict';
 const $ = s => document.querySelector(s);
-const now = () => performance.now();
-const wait = ms => new Promise(r => setTimeout(r, ms));
+/* Game clock: stops while paused, so tweens, timers and the round clock all freeze together. */
+let pauseAt = 0, pausedMs = 0;
+const timers = [];
+const now = () => (pauseAt || performance.now()) - pausedMs;
+const wait = ms => new Promise(r => timers.push({ at:now() + ms, r }));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -263,6 +321,19 @@ const TIERS = [
   { name:'ROOT-CAUSE KICK', dmg:20, min:18, color:'#35e0c2' },
   { name:'OUTCOME UPPERCUT', dmg:26, min:30, color:'#ffd23f' },
   { name:'FIVE WHYS FURY', dmg:34, min:45, color:'#ffffff' },
+];
+const HOW = '<li><b>READ</b><br>Each round shows one question and two possible answers.</li>'
+  + '<li><b>TYPE</b><br>Type the answer you believe, exactly as shown. Capitals and punctuation count.</li>'
+  + '<li><b>STRIKE</b><br>Faster, cleaner typing lands a bigger hit. Type the wrong answer and you take the hit.</li>';
+const ME = { name:'WHY KID', hairStyle:'spike', hair:'#3a2418', skin:'#f2c79a', top:'#1fb8a6', bottom:'#2b2f6b', gear:'band', trim:'#ffd23f' };
+const OPTS = [
+  { k:'hairStyle', label:'HAIR', v:[['spike', 'SPIKY'], ['slick', 'SLICK'], ['long', 'LONG'], ['mohawk', 'MOHAWK'], ['none', 'BALD']] },
+  { k:'hair', label:'HAIR COLOUR', sw:1, v:[['#3a2418', 'Brown'], ['#15131f', 'Black'], ['#ffb300', 'Blonde'], ['#c0392b', 'Red'], ['#f1edff', 'Silver'], ['#35e0c2', 'Teal'], ['#ff5fa2', 'Pink']] },
+  { k:'skin', label:'SKIN', sw:1, v:[['#f7d7b5', 'Light'], ['#f2c79a', 'Fair'], ['#d9a06b', 'Tan'], ['#a86d42', 'Brown'], ['#6e4428', 'Deep']] },
+  { k:'top', label:'TOP', sw:1, v:[['#1fb8a6', 'Teal'], ['#2e86c1', 'Blue'], ['#8e5bd0', 'Purple'], ['#ff8a3d', 'Orange'], ['#e84a5f', 'Red'], ['#f4f0e0', 'White'], ['#2a2a33', 'Black']] },
+  { k:'bottom', label:'BOTTOMS', sw:1, v:[['#2b2f6b', 'Navy'], ['#2a2a33', 'Black'], ['#6b3a1e', 'Brown'], ['#3d6b4a', 'Green'], ['#f4f0e0', 'White']] },
+  { k:'gear', label:'GEAR', v:[['band', 'HEADBAND'], ['shades', 'SHADES'], ['cape', 'CAPE'], ['none', 'NONE']] },
+  { k:'trim', label:'GEAR AND SHOE COLOUR', sw:1, v:[['#ffd23f', 'Gold'], ['#f4f0e0', 'White'], ['#ff4d6d', 'Red'], ['#35e0c2', 'Teal'], ['#8dff6b', 'Green']] },
 ];
 const tierOf = p => p >= 45 ? 3 : p >= 30 ? 2 : p >= 18 ? 1 : 0;
 
@@ -640,6 +711,7 @@ function mkFighter(look, x, dir) {
 const hero = mkFighter(HERO_LOOK, 82, 1), opp = mkFighter(FIGHTS[5].look, 174, -1);
 let frontF = hero;
 function drawFighter(f, t) {
+  if (f.hide) return;
   const g = f.g, og = f.og;
   g.clearRect(0, 0, 96, 96);
   drawPuppet(g, f.look, (POSES[f.pose] || POSES.idle)(t), t);
@@ -674,7 +746,8 @@ const el = { hud:$('#hud'), logo:$('#logo'), banner:$('#banner'), call:$('#call'
   score:$('#score'), hi:$('#hi'), stg:$('#stg'), snd:$('#snd'), q:$('#q'), qkick:$('#q-kick'), streak:$('#q-streak'),
   typing:$('#typing'), explain:$('#explain'), typer:$('#typer'), cards:[$('#c0'), $('#c1')],
   wpm:$('#m-wpm'), acc:$('#m-acc'), fill:$('#m-fill'), move:$('#m-move') };
-function setScreen(id) { document.querySelectorAll('.scr').forEach(e => { e.hidden = e.id !== id; }); }
+function setScreen(id) { document.querySelectorAll('.scr').forEach(e => { e.hidden = e.id !== id; }); $('#menu').hidden = id === 's-title' || id === 's-make'; }
+const focusOn = n => { try { n.focus({ preventScroll:true }); } catch (e) {} };
 function setBanner(text, cls) { el.banner.textContent = text; el.banner.className = 'banner'; void el.banner.offsetWidth; el.banner.className = 'banner show ' + (cls || ''); }
 function clearBanner() { el.banner.textContent = ''; el.banner.className = 'banner'; }
 async function banner(text, cls, ms) { setBanner(text, cls); await wait(ms); clearBanner(); }
@@ -692,20 +765,88 @@ let F = null;
 function addScore(n) { S.score += n; el.score.textContent = pad6(S.score); if (S.score > S.hi) { S.hi = S.score; el.hi.textContent = pad6(S.hi); store('pb-hi', String(S.hi)); } }
 function place(hx, ox) { killTweens(hero); killTweens(opp); Object.assign(hero, { x:hx, home:hx, y:0, pose:'idle', aura:0, flash:0 }); Object.assign(opp, { x:ox, home:ox, y:0, pose:'idle', flash:0 }); }
 
+/* ----- your fighter */
+const swBtns = [];
+function lum(hex) { const n = parseInt(hex.slice(1), 16); return (n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11; }
+function applyMe() {
+  const L = HERO_LOOK;
+  Object.assign(L, { skin:ME.skin, top:ME.top, bottom:ME.bottom, hair:ME.hair, hairStyle:ME.hairStyle, shoe:ME.trim });
+  L.extras = { emblem:lum(ME.top) < 70 ? ME.trim : shade(ME.top, .35) };
+  if (ME.gear === 'band') L.extras.band = ME.trim; else if (ME.gear === 'shades') L.extras.shades = 1; else if (ME.gear === 'cape') L.extras.cape = ME.trim;
+  swBtns.forEach(s => s.b.setAttribute('aria-pressed', String(ME[s.k] === s.val)));
+  $('#nm-l').textContent = ME.name;
+}
+function cleanName(s) { return String(s).toUpperCase().replace(/[^A-Z0-9 .'\-]/g, '').slice(0, 12).trim() || 'WHY KID'; }
+function loadMe(o) {
+  if (!o || typeof o !== 'object') return;
+  OPTS.forEach(p => { if (p.v.some(x => x[0] === o[p.k])) ME[p.k] = o[p.k]; });
+  if (typeof o.name === 'string') ME.name = cleanName(o.name);
+}
+function saveMe() { store('pb-hero', JSON.stringify(ME)); }
+function buildMake() {
+  const box = $('#opts');
+  OPTS.forEach(p => {
+    const d = document.createElement('div'), k = document.createElement('span'), r = document.createElement('div');
+    d.className = 'opt'; k.className = 'kick'; k.textContent = p.label; r.className = 'row'; r.setAttribute('role', 'group'); r.setAttribute('aria-label', p.label);
+    p.v.forEach(([val, name]) => {
+      const b = document.createElement('button'); b.type = 'button';
+      if (p.sw) { b.className = 'sw'; b.style.background = val; b.title = name; b.setAttribute('aria-label', name); } else { b.className = 'tab'; b.textContent = name; }
+      b.onclick = () => { ME[p.k] = val; applyMe(); saveMe(); sfx.key(); };
+      swBtns.push({ k:p.k, val, b }); r.append(b);
+    });
+    d.append(k, r); box.append(d);
+  });
+  $('#how-t').innerHTML = HOW; $('#how-p').innerHTML = HOW;
+  $('#atk').innerHTML = TIERS.map((t, i) => '<li><b style="color:' + t.color + '">' + t.name + '</b>' + (i ? 'Power ' + t.min + ' or more' : 'Any speed') + '. ' + t.dmg + ' damage.</li>').join('');
+}
+function toMake() {
+  S.phase = 'make'; setScreen('s-make'); opp.hide = true; place(128, 174); el.logo.hidden = true;
+  $('#hname').value = ME.name === 'WHY KID' ? '' : ME.name;
+  focusOn($('#b-ready'));
+}
+
+/* ----- pause menu */
+let paused = false, backScr = 's-title';
+const notesHead = D => 'LESSON ' + D.lesson + ' NOTES: ' + D.title;
+const notesHTML = D => D.moves.map(m => '<li>' + m + '</li>').join('');
+function pauseView(v) { ['how', 'notes', 'quit'].forEach(k => { $('#p-' + k).hidden = k !== v; $('#t-' + k).setAttribute('aria-pressed', String(k === v)); }); }
+function openPause(v) {
+  if (paused || S.phase === 'title' || S.phase === 'make') return;
+  paused = true; pauseAt = performance.now();
+  backScr = document.querySelector('.scr:not([hidden])').id;
+  const D = FIGHTS[S.fight]; $('#p-nh').textContent = notesHead(D); $('#p-moves').innerHTML = notesHTML(D);
+  el.typer.blur(); setScreen('s-pause'); $('#ptag').hidden = false; pauseView(v || 'how');
+  focusOn($('#b-resume'));
+}
+function unfreeze() { if (paused) { pausedMs += performance.now() - pauseAt; pauseAt = 0; } paused = false; $('#ptag').hidden = true; }
+function closePause() {
+  if (!paused) return;
+  unfreeze(); setScreen(backScr);
+  if (S.phase === 'typing') focusOn(el.typer);
+  else { const b = document.querySelector('.scr:not([hidden]) .btn.primary'); if (b) focusOn(b); }
+}
+function quitHome() {
+  unfreeze();
+  /* dropping the queues leaves any in-flight fight sequence parked forever, which is what we want */
+  tweens.length = 0; timers.length = 0; parts.length = 0; fx.dark = 0; flashA = 0; shakeT = 0; frontF = hero;
+  el.pops.textContent = ''; el.call.className = 'call'; el.clock.classList.remove('low'); F = null; S.score = 0; el.score.textContent = pad6(0);
+  toTitle(); focusOn($('#b-start'));
+}
+
 function toTitle() {
-  S.phase = 'title'; setScreen('s-title'); loadStage('charts'); opp.look = FIGHTS[5].look; place(108, 148);
+  S.phase = 'title'; setScreen('s-title'); loadStage('charts'); opp.look = FIGHTS[5].look; opp.hide = false; place(108, 148);
   el.hud.hidden = true; el.logo.hidden = false; clearBanner(); el.stg.textContent = '1/6';
 }
 function newGame() { S.score = 0; el.score.textContent = pad6(0); S.tot = { asked:0, right:0, wpm:0, acc:0, best:0, pow:0 }; S.missed = []; toVS(0); }
 function toVS(i) {
   const D = FIGHTS[i];
-  S.phase = 'vs'; S.fight = i; setScreen('s-vs'); loadStage(D.stage); opp.look = D.look; place(82, 174);
+  S.phase = 'vs'; S.fight = i; setScreen('s-vs'); loadStage(D.stage); opp.look = D.look; opp.hide = false; place(82, 174);
   el.hud.hidden = true; el.logo.hidden = true; setBanner('VS', ''); el.stg.textContent = (i + 1) + '/6';
   const lad = $('#ladder'); lad.textContent = '';
   FIGHTS.forEach((f, k) => { const li = document.createElement('li'); li.textContent = (k + 1) + ' ' + f.short + (k < i ? ' KO' : ''); li.className = k < i ? 'done' : k === i ? 'now' : ''; if (k === i) li.setAttribute('aria-current', 'step'); lad.append(li); });
-  $('#vs-kick').textContent = 'LESSON ' + D.lesson + ' OF 6' + (i === 5 ? ' · FINAL BOSS' : '');
-  $('#vs-title').textContent = D.title; $('#vs-name').textContent = D.name; $('#vs-tag').textContent = '"' + D.tag + '"';
-  $('#vs-moves').innerHTML = D.moves.map(m => '<li>' + m + '</li>').join('');
+  $('#vs-kick').textContent = 'ROUND ' + (i + 1) + ' OF 6' + (i === 5 ? ' · FINAL BOSS' : '');
+  $('#vs-title').textContent = ME.name + ' VS ' + D.name; $('#vs-name').textContent = D.name; $('#vs-tag').textContent = '"' + D.tag + '"';
+  $('#vs-nh').textContent = notesHead(D); $('#vs-moves').innerHTML = notesHTML(D);
   $('#b-fight').focus({ preventScroll:true });
 }
 async function startFight() {
@@ -882,7 +1023,7 @@ function toResult() {
   statTiles($('#r-stats'), [['AVG SPEED', Math.round(F.wpm / n) + ' WPM'], ['ACCURACY', Math.round(F.acc / n * 100) + '%'], ['RIGHT ANSWERS', F.right + ' OF ' + (F.right + F.miss)], ['TOP SPEED', Math.round(F.best) + ' WPM']]);
   $('#r-note').textContent = win
     ? (F.miss === 0 ? 'Flawless: no wrong answers. Bonus 2,000 points.' : 'You took ' + F.miss + (F.miss === 1 ? ' hit' : ' hits') + '. Those questions are saved for the review at the end.') + (S.fight < 5 ? ' Next up: ' + FIGHTS[S.fight + 1].name + '.' : '')
-    : D.name + ' wins this one. Read the move list again, then rematch. Missed questions come back until you land them.';
+    : D.name + ' wins this one. Read the lesson notes again, then rematch. Missed questions come back until you land them.';
   const btn = $('#b-cont'); btn.textContent = win ? (S.fight < 5 ? 'NEXT OPPONENT' : 'SEE THE ENDING') : 'REMATCH'; btn.focus({ preventScroll:true });
 }
 function toEnd() {
@@ -897,7 +1038,15 @@ function toEnd() {
 }
 
 /* ----------------------------------------------------------------- input */
-$('#b-start').onclick = () => { if (S.phase === 'title') { sfx.select(); newGame(); } };
+$('#b-start').onclick = () => { if (S.phase === 'title') { sfx.select(); toMake(); } };
+$('#b-ready').onclick = () => { if (S.phase !== 'make') return; ME.name = cleanName($('#hname').value); applyMe(); saveMe(); sfx.select(); newGame(); };
+$('#b-back').onclick = () => { if (S.phase === 'make') { sfx.back(); toTitle(); focusOn($('#b-start')); } };
+$('#b-rand').onclick = () => { OPTS.forEach(p => { ME[p.k] = p.v[Math.random() * p.v.length | 0][0]; }); applyMe(); saveMe(); sfx.select(); };
+$('#hname').addEventListener('input', e => { const raw = e.target.value, v = raw.replace(/[^A-Za-z0-9 .'\-]/g, ''); if (v !== raw) e.target.value = v; ME.name = cleanName(v); $('#nm-l').textContent = ME.name; });
+$('#menu').onclick = () => { sfx.select(); if (paused) closePause(); else openPause(); };
+$('#b-resume').onclick = () => { sfx.select(); closePause(); };
+$('#b-quit').onclick = () => { if (paused) { sfx.back(); quitHome(); } };
+['how', 'notes', 'quit'].forEach(k => { $('#t-' + k).onclick = () => { sfx.key(); pauseView(k); }; });
 $('#b-fight').onclick = () => { if (S.phase === 'vs') { sfx.select(); startFight(); } };
 $('#b-next').onclick = () => { if (S.phase !== 'explain') return; sfx.select(); if (F.over) toResult(); else nextQ(); };
 $('#b-cont').onclick = () => { if (S.phase !== 'result') return; sfx.select(); if (F.over === 'win') { if (S.fight < 5) toVS(S.fight + 1); else toEnd(); } else toVS(S.fight); };
@@ -905,10 +1054,14 @@ $('#b-again').onclick = () => { if (S.phase === 'end') { sfx.select(); toTitle()
 el.snd.onclick = () => { muted = !muted; el.snd.textContent = muted ? 'SOUND OFF' : 'SOUND ON'; el.snd.setAttribute('aria-pressed', String(!muted)); store('pb-mute', muted ? '1' : '0'); if (!muted) sfx.select(); };
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (S.phase === 'typing') {
+  if (e.key === 'Escape') {
+    if (paused) { e.preventDefault(); closePause(); }
+    else if (S.phase !== 'title' && S.phase !== 'make') { e.preventDefault(); openPause(); }
+    return;
+  }
+  if (!paused && S.phase === 'typing') {
     if (e.isComposing || e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process' || e.key === 'Dead') return;
     if (e.key === 'Backspace') { e.preventDefault(); backspace(false); }
-    else if (e.key === 'Escape') { e.preventDefault(); backspace(true); }
     else if (e.key.length === 1) { e.preventDefault(); typeChar(e.key); }
     return;
   }
@@ -926,18 +1079,16 @@ el.typer.addEventListener('input', () => {
   if (S.phase === 'typing') el.typer.value = F.buf; else el.typer.value = '';
 });
 ['paste', 'drop'].forEach(n => el.typer.addEventListener(n, e => e.preventDefault()));
-let hiddenAt = 0;
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) hiddenAt = now();
-  else if (hiddenAt && F && S.phase === 'typing') { const d = now() - hiddenAt; F.deadline += d; if (F.t0) F.t0 += d; hiddenAt = 0; }
-});
+document.addEventListener('visibilitychange', () => { if (document.hidden && ['typing', 'anim', 'intro'].includes(S.phase)) openPause(); });
 
 /* ------------------------------------------------------------------ loop */
-let last = now(), titleK = -1;
+let last = now(), titleK = -1, makeK = -1;
 function frame() {
   const t = now(), dt = Math.min(.05, (t - last) / 1000); last = t;
   for (let i = tweens.length - 1; i >= 0; i--) { const w = tweens[i], k = Math.min(1, (t - w.t0) / w.ms); w.o[w.p] = w.from + (w.to - w.from) * (w.ease ? w.ease(k) : k); if (k >= 1) { tweens.splice(i, 1); w.res(); } }
-  if (S.phase === 'title') {
+  for (let i = timers.length - 1; i >= 0; i--) if (timers[i].at <= t) timers.splice(i, 1)[0].r();
+  if (S.phase === 'make') { const k = (t / 800 | 0) % 6; if (k !== makeK) { makeK = k; hero.pose = k === 2 ? 'jab' : k === 4 ? 'kick' : k === 5 ? 'win' : 'idle'; } }
+  else if (S.phase === 'title') {
     const k = (t / 700 | 0) % 8;
     if (k !== titleK) { titleK = k; hero.pose = k === 1 ? 'jab' : k === 5 ? 'kick' : 'idle'; opp.pose = k === 1 || k === 5 ? 'hurt' : k === 3 ? 'jab' : 'idle'; if (k === 1 || k === 5) { opp.flash = .08; spark(opp.x - 6, GY - 26, 1); } if (k === 3) hero.pose = 'hurt'; }
   } else if (S.phase === 'typing') {
@@ -955,7 +1106,7 @@ function frame() {
   ctx.setTransform(1, 0, 0, 1, sx, sy);
   ctx.drawImage(bg, 0, 0); STAGE_FX[stageKind](ctx, t);
   if (fx.dark > 0) { ctx.fillStyle = 'rgba(6,5,22,' + fx.dark + ')'; ctx.fillRect(-8, -8, W + 16, H + 16); }
-  [hero, opp].forEach(f => { const w = f.pose === 'ko' ? 30 : Math.max(8, 20 + f.y * .4); ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(Math.round(f.x - w / 2 - (f.pose === 'ko' ? f.dir * 16 : 0)), GY - 1, Math.round(w), 3); });
+  [hero, opp].forEach(f => { if (f.hide) return; const w = f.pose === 'ko' ? 30 : Math.max(8, 20 + f.y * .4); ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(Math.round(f.x - w / 2 - (f.pose === 'ko' ? f.dir * 16 : 0)), GY - 1, Math.round(w), 3); });
   const back = frontF === hero ? opp : hero;
   drawFighter(back, t); drawFighter(frontF, t);
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -974,11 +1125,13 @@ function frame() {
 function start(data) {
   S.hi = parseInt(store('pb-hi') || '0', 10) || 0; el.hi.textContent = pad6(S.hi);
   if (store('pb-mute') === '1') { muted = true; el.snd.textContent = 'SOUND OFF'; el.snd.setAttribute('aria-pressed', 'false'); }
+  let saved = null; try { saved = JSON.parse(store('pb-hero') || 'null'); } catch (e) {}
+  buildMake(); loadMe(saved); loadMe(data && data.me); applyMe();
   if (data && data.fight > 0 && data.fight < 6 && data.tot) { S.score = data.score || 0; el.score.textContent = pad6(S.score); S.tot = data.tot; S.missed = data.missed || []; toVS(data.fight); }
   else toTitle();
   requestAnimationFrame(frame);
 }
-try { window.claude?.hot?.snapshot?.(() => ({ fight:S.phase === 'title' || S.phase === 'end' ? 0 : S.fight, score:S.score, tot:S.tot, missed:S.missed })); } catch (e) {}
+try { window.claude?.hot?.snapshot?.(() => ({ fight:S.phase === 'title' || S.phase === 'end' ? 0 : S.fight, score:S.score, tot:S.tot, missed:S.missed, me:ME })); } catch (e) {}
 if (window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window.claude?.hot?.data ?? {});
 })();
 </script>
