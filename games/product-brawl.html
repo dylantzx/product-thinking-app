@@ -760,7 +760,10 @@ function statTiles(node, rows) { node.textContent = ''; rows.forEach(([k, v]) =>
 function rankTile(node, letter) { node.textContent = 'RANK'; const b = document.createElement('b'); b.textContent = letter; node.append(b); }
 
 /* ------------------------------------------------------------ game state */
-const S = { phase:'title', fight:0, score:0, hi:0, tot:null, missed:[] };
+const S = { phase:'title', fight:0, score:0, hi:0, tot:null, missed:[], run:null };
+/* Run checkpoint for hot reload: the fight to resume at, with score and totals as they stood before it.
+   Taken only at fight boundaries, so a restore never counts a fight twice. Null when no run is live. */
+function checkpoint(fight) { S.run = fight < 6 ? { fight, score:S.score, tot:Object.assign({}, S.tot), missed:S.missed.slice() } : null; }
 let F = null;
 function addScore(n) { S.score += n; el.score.textContent = pad6(S.score); if (S.score > S.hi) { S.hi = S.score; el.hi.textContent = pad6(S.hi); store('pb-hi', String(S.hi)); } }
 function place(hx, ox) { killTweens(hero); killTweens(opp); Object.assign(hero, { x:hx, home:hx, y:0, pose:'idle', aura:0, flash:0 }); Object.assign(opp, { x:ox, home:ox, y:0, pose:'idle', flash:0 }); }
@@ -834,13 +837,13 @@ function quitHome() {
 }
 
 function toTitle() {
-  S.phase = 'title'; setScreen('s-title'); loadStage('charts'); opp.look = FIGHTS[5].look; opp.hide = false; place(108, 148);
+  S.phase = 'title'; S.run = null; setScreen('s-title'); loadStage('charts'); opp.look = FIGHTS[5].look; opp.hide = false; place(108, 148);
   el.hud.hidden = true; el.logo.hidden = false; clearBanner(); el.stg.textContent = '1/6';
 }
 function newGame() { S.score = 0; el.score.textContent = pad6(0); S.tot = { asked:0, right:0, wpm:0, acc:0, best:0, pow:0 }; S.missed = []; toVS(0); }
 function toVS(i) {
   const D = FIGHTS[i];
-  S.phase = 'vs'; S.fight = i; setScreen('s-vs'); loadStage(D.stage); opp.look = D.look; opp.hide = false; place(82, 174);
+  S.phase = 'vs'; S.fight = i; checkpoint(i); setScreen('s-vs'); loadStage(D.stage); opp.look = D.look; opp.hide = false; place(82, 174);
   el.hud.hidden = true; el.logo.hidden = true; setBanner('VS', ''); el.stg.textContent = (i + 1) + '/6';
   const lad = $('#ladder'); lad.textContent = '';
   FIGHTS.forEach((f, k) => { const li = document.createElement('li'); li.textContent = (k + 1) + ' ' + f.short + (k < i ? ' KO' : ''); li.className = k < i ? 'done' : k === i ? 'now' : ''; if (k === i) li.setAttribute('aria-current', 'step'); lad.append(li); });
@@ -1018,6 +1021,7 @@ function toResult() {
   S.phase = 'result'; setScreen('s-result');
   const T = S.tot; T.asked += F.right + F.miss; T.right += F.right; T.wpm += F.wpm; T.acc += F.acc; T.pow += F.pow; T.best = Math.max(T.best, F.best);
   if (win) addScore(1000 + F.php * 10 + (F.miss === 0 ? 2000 : 0));
+  checkpoint(win ? S.fight + 1 : S.fight);
   $('#r-title').textContent = win ? D.name + ' DEFEATED' : 'YOU GOT KNOCKED OUT';
   rankTile($('#r-rank'), win ? rankOf(F.miss, F.pow / n, F.right) : '-');
   statTiles($('#r-stats'), [['AVG SPEED', Math.round(F.wpm / n) + ' WPM'], ['ACCURACY', Math.round(F.acc / n * 100) + '%'], ['RIGHT ANSWERS', F.right + ' OF ' + (F.right + F.miss)], ['TOP SPEED', Math.round(F.best) + ' WPM']]);
@@ -1028,7 +1032,7 @@ function toResult() {
 }
 function toEnd() {
   const T = S.tot, n = T.right || 1;
-  S.phase = 'end'; setScreen('s-end'); setBanner('CHAMPION', 'hi'); el.hud.hidden = true; hero.pose = 'win';
+  S.phase = 'end'; S.run = null; setScreen('s-end'); setBanner('CHAMPION', 'hi'); el.hud.hidden = true; hero.pose = 'win';
   rankTile($('#e-rank'), rankOf(T.asked - T.right > 4 ? 3 : T.asked - T.right > 1 ? 1 : 0, T.pow / n, T.right));
   statTiles($('#e-stats'), [['FINAL SCORE', pad6(S.score)], ['AVG SPEED', Math.round(T.wpm / n) + ' WPM'], ['ACCURACY', Math.round(T.acc / n * 100) + '%'], ['RIGHT ANSWERS', T.right + ' OF ' + T.asked]]);
   const ul = $('#e-missed'); ul.textContent = '';
@@ -1131,7 +1135,7 @@ function start(data) {
   else toTitle();
   requestAnimationFrame(frame);
 }
-try { window.claude?.hot?.snapshot?.(() => ({ fight:S.phase === 'title' || S.phase === 'end' ? 0 : S.fight, score:S.score, tot:S.tot, missed:S.missed, me:ME })); } catch (e) {}
+try { window.claude?.hot?.snapshot?.(() => (S.run ? Object.assign({ me:ME }, S.run) : { fight:0, me:ME })); } catch (e) {}
 if (window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window.claude?.hot?.data ?? {});
 })();
 </script>
